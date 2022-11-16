@@ -36,10 +36,10 @@ gi.require_version('Wnck', '3.0')
 from gi.repository import Gtk, Gdk, GdkX11, Wnck
 import cairo
 
+
 class Rect():
 
     def __init__(self, x1=-1, y1=-1, x2=-1, y2=-1):
-
         self.x1 = x1
         self.y1 = y1
         self.x2 = x2
@@ -52,7 +52,6 @@ class Rect():
             and self.y2 >= 0
 
     def to_cairo(self, scale_x=1, scale_y=1):
-
         x1 = min(self.x1, self.x2)
         y1 = min(self.y1, self.y2)
         x2 = max(self.x1, self.x2)
@@ -65,27 +64,26 @@ class Rect():
             (1 + y2 - y1) * scale_y,
             )
 
+
 class GridLock(Gtk.Window):
 
     def __init__(self, active_window, cols=16, rows=10):
-
         super().__init__(title='Gridlock')
 
         self.active_window = active_window
         self.cols = cols
         self.rows = rows
         self.drag = False
-        self.cursor_rect = Rect(-1, -1, -1, -1)
-
-        screen = self.get_screen()                                                       
-        visual = screen.get_rgba_visual()                                                
-        if visual and screen.is_composited():                                            
-            self.set_visual(visual)                                                      
-        else:                                                                            
-            raise RuntimeError('This application needs a compositor!')
-
+        self.cursor_rect = Rect()
         self.connect('destroy', Gtk.main_quit)
         self.fullscreen()
+
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual and screen.is_composited():
+            self.set_visual(visual)
+        else:
+            raise RuntimeError('This application needs a compositor!')
 
         self.set_events(
             Gdk.EventMask.BUTTON_PRESS_MASK
@@ -120,7 +118,6 @@ class GridLock(Gtk.Window):
         ctx.set_operator(cairo.OPERATOR_OVER)
 
     def on_draw_cursor(self, cursor, ctx):
-
         allocation = self.grid.get_allocation()
         cell_width = allocation.width // self.cols
         cell_height = allocation.height // self.rows
@@ -133,7 +130,6 @@ class GridLock(Gtk.Window):
             ctx.fill()
 
     def on_draw_grid(self, area, ctx):
-
         allocation = area.get_allocation()
         width = allocation.width
         height = allocation.height
@@ -196,7 +192,6 @@ class GridLock(Gtk.Window):
         Gtk.main_quit()
 
     def on_mouse_move(self, widget, event):
-
         allocation = self.grid.get_allocation()
         cell_width = allocation.width // self.cols
         cell_height = allocation.height // self.rows
@@ -204,12 +199,12 @@ class GridLock(Gtk.Window):
         if self.drag:
             self.cursor_rect.x2 = int(event.x / cell_width)
             self.cursor_rect.y2 = int(event.y / cell_height)
-
         else:
             self.cursor_rect.x1 = self.cursor_rect.x2 = int(event.x / cell_width)
             self.cursor_rect.y1 = self.cursor_rect.y2 = int(event.y / cell_height)
 
         self.cursor.queue_draw()
+
 
 screen = Wnck.Screen.get_default()
 screen.force_update()
