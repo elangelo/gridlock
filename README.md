@@ -19,6 +19,7 @@ TODO:
 - [ ] Prevent gridlock being launched more than once (yuck!)
 - [ ] Allow custom grid rows/columns
 - [ ] Allow custom colors and opacity
+- [ ] Live preview of resized window?
 - [ ] Daemon mode to get rid of `xbindkeys`?
 - [ ] More eye candy?
 - [ ] Fallback mode if no compositor?
