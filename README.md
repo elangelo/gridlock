@@ -34,7 +34,7 @@ GTK+ 3, GDK, Cairo and Wnck. Tested with:
 
 ## Motivation
 
-After trying countless stacking, tiling amd compositing window managers
+After trying countless stacking, tiling and compositing window managers
 (and hybrid ones) I still am not entirely happy with the different
 appraches to window handling. Gridlock was inspired by a short discussion
 on the xfce4-dev mailing list and obviously, by [windowgrid](http://windowgrid.net/).
