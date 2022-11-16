@@ -19,6 +19,7 @@ TODO:
 - [ ] Prevent gridlock being launched more than once (yuck!)
 - [ ] Allow custom grid rows/columns
 - [ ] Allow custom colors and opacity
+- [ ] More compatibility with sidebars and reserved spaces
 - [ ] Live preview of resized window?
 - [ ] Daemon mode to get rid of `xbindkeys`?
 - [ ] More eye candy?
