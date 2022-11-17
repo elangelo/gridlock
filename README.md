@@ -16,7 +16,7 @@ hotkey or mouse button, you may want to take a look at
 
 TODO:
 - [X] Put this on github
-- [ ] Prevent gridlock being launched more than once (yuck!)
+- [X] Prevent gridlock being launched more than once (yuck!)
 - [X] Allow custom grid rows/columns
 - [X] Allow custom colors and opacity
 - [X] More compatibility with sidebars and reserved spaces
