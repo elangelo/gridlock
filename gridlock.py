@@ -202,7 +202,7 @@ class GridLock(Gtk.Window):
                 print(f'  translated geometry = {width}x{height}+{new_x}+{new_y}')
 
             self.active_window.set_geometry(
-                Wnck.WindowGravity.STATIC,
+                args.gravity,
                 Wnck.WindowMoveResizeMask.X
                 | Wnck.WindowMoveResizeMask.Y
                 | Wnck.WindowMoveResizeMask.WIDTH
@@ -303,6 +303,21 @@ if args.offset is not None:
     args.offset = tuple(int(i) for i in args.offset.split(','))
 else:
     args.offset = (0, 0)
+
+#
+# parse gravity specification
+#
+if args.gravity is not None:
+    if args.gravity.lower() == 'current':
+        args.gravity = Wnck.WindowGravity.CURRENT
+    elif args.gravity.lower() == 'static':
+        args.gravity = Wnck.WindowGravity.STATIC
+    elif args.gravity.lower() == 'northwest':
+        args.gravity = Wnck.WindowGravity.NORTHWEST
+    else:
+        raise ValueError(f'Illegal gravity value: "args.gravity"')
+else:
+    args.gravity = Wnck.WindowGravity.STATIC
 
 #
 # parse color specifications
