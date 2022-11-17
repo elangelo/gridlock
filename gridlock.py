@@ -169,7 +169,7 @@ class GridLock(Gtk.Window):
         ctx.fill()
 
         ctx.set_source_rgba(*args.grid_color)
-        ctx.set_line_width(7)
+        ctx.set_line_width(args.grid_thickness)
         ctx.set_line_join(cairo.LINE_JOIN_ROUND)
 
         for i in range(1, self.cols):
@@ -298,7 +298,7 @@ arg_parser.add_argument('-g', '--grid',
     )
 arg_parser.add_argument('-c', '--grid-color',
     dest='grid_color', action='store',
-    help='grid color as "red,green,blue[,opacity]"',
+    help='grid color as "red,green,blue[,opacity], eg. 0,0,1.0 for blue"',
     )
 arg_parser.add_argument('-b', '--background-color', '--bg-color',
     dest='bg_color', action='store',
@@ -308,6 +308,11 @@ arg_parser.add_argument('-l', '--hilight-color', '--hi-color',
     dest='hi_color', action='store',
     help='hilight color as "red,green,blue[,opacity]"',
     )
+arg_parser.add_argument('-t', '--grid-thickness', 
+    dest='grid_thickness', action='store',
+    help='thickness of the lines of the grid lines in pixels'
+    )
+
 
 args = arg_parser.parse_args()
 
@@ -359,6 +364,11 @@ if args.hi_color is not None:
     args.hi_color = parse_color_spec(args.hi_color)
 else:
     args.hi_color = (1.0, 1.0, 1.0, .3)
+
+if args.grid_thickness is not None:
+    args.grid_thickness = int(args.grid_thickness)
+else:
+    args.grid_thickness = 7
 
 screen = Wnck.Screen.get_default()
 screen.force_update()
