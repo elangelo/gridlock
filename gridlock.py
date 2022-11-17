@@ -271,7 +271,8 @@ def parse_color_spec(arg_string):
 arg_parser = argparse.ArgumentParser(
     prog = progname,
     description = '',
-    epilog = 'Specify color components as floats [0.0, 1.0].\n'
+    epilog = 'Specify color components as floats [0.0, 1.0], e.g.'
+        ' "0.5,0.8,1.0,0.8" for\nlight sky blue with 80% opacity.\n\n'
         'Caveat: This tool uses RGBA visuals. Compositor needed.',
     formatter_class = argparse.RawDescriptionHelpFormatter,
     )
@@ -298,7 +299,7 @@ arg_parser.add_argument('-g', '--grid',
     )
 arg_parser.add_argument('-c', '--grid-color',
     dest='grid_color', action='store',
-    help='grid color as "red,green,blue[,opacity], eg. 0,0,1.0 for blue"',
+    help='grid color as "red,green,blue[,opacity]"',
     )
 arg_parser.add_argument('-b', '--background-color', '--bg-color',
     dest='bg_color', action='store',
