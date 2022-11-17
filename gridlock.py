@@ -215,13 +215,15 @@ class GridLock(Gtk.Window):
 
             new_x = x + grid_x + args.offset[0]
             new_y = y + grid_y + args.offset[1]
+            new_width = width + 2 * abs(args.offset[0])
+            new_height = height + 2 * abs(args.offset[1])
 
             if args.debug:
                 print('Compute new geometry and call Wnck.window.set_geometry()')
                 print(f'  target geometry = {width}x{height}+{x}+{y}')
                 print(f'  grid geometry = {grid_width}x{grid_height}+{grid_x}+{grid_y}')
                 print(f'  offset = {args.offset}')
-                print(f'  translated geometry = {width}x{height}+{new_x}+{new_y}')
+                print(f'  translated geometry = {new_width}x{new_height}+{new_x}+{new_y}')
 
             self.active_window.set_geometry(
                 args.gravity,
@@ -231,8 +233,8 @@ class GridLock(Gtk.Window):
                 | Wnck.WindowMoveResizeMask.HEIGHT,
                 new_x,
                 new_y,
-                width,
-                height,
+                new_width,
+                new_height,
                 )
 
             Gtk.main_quit()
@@ -323,26 +325,13 @@ if args.grid is not None:
 else:
     args.grid = (16, 10)
 
-#
-# parse offset specification
-#
-if args.offset is not None:
-    args.offset = tuple(int(i) for i in args.offset.split(','))
-else:
-    args.offset = (0, 0)
+
 
 #
 # parse gravity specification
 #
 if args.gravity is not None:
-    if args.gravity.lower() == 'current':
-        args.gravity = Wnck.WindowGravity.CURRENT
-    elif args.gravity.lower() == 'static':
-        args.gravity = Wnck.WindowGravity.STATIC
-    elif args.gravity.lower() == 'northwest':
-        args.gravity = Wnck.WindowGravity.NORTHWEST
-    else:
-        raise ValueError(f'Illegal gravity value: "args.gravity"')
+    args.gravity = getattr(Wnck.WindowGravity, args.gravity.upper())
 else:
     args.gravity = Wnck.WindowGravity.STATIC
 
@@ -377,9 +366,26 @@ if active_window is None:
 
 if args.debug:
     print(f'Active window is 0x{active_window.get_xid():x}')
-    print(f'  name = "{active_window.get_name()}"')
-    print(f'  class group = "{active_window.get_class_group_name()}"')
-    print(f'  type = "{active_window.get_window_type()}"')
+    print(f'          name = "{active_window.get_name()}"')
+    print(f'   class group = "{active_window.get_class_group_name()}"')
+    print(f'          type = "{active_window.get_window_type()}"')
+    print(f'      geometry = {active_window.get_geometry()}')
+    print(f'clientgeometry = {active_window.get_client_window_geometry()}')
+    print(f'{active_window.get_client_window_geometry() == active_window.get_geometry()}')
+    print(f'          role = {active_window.get_role()}')
+
+# windows that have CSD enabled actually report that their client_window_geometry is the same as the full window_geometry, so only add the offset to those windows
+if active_window.get_client_window_geometry() == active_window.get_geometry():
+    #
+    # parse offset specification
+    #
+    if args.offset is not None:
+        args.offset = tuple(int(i) for i in args.offset.split(','))
+    else:
+        args.offset = (0, 0)
+else:
+    args.offset = (0, 0)
+
 
 if active_window.get_window_type() != Wnck.WindowType.NORMAL:
     if args.debug:
