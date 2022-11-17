@@ -67,7 +67,7 @@ class Rect():
 
 class GridLock(Gtk.Window):
 
-    def __init__(self, active_window, cols=16, rows=10):
+    def __init__(self, active_window, cols=5, rows=4):
 
         super().__init__(title='Gridlock')
 
@@ -143,7 +143,7 @@ class GridLock(Gtk.Window):
         ctx.fill()
 
         ctx.set_source_rgba(0, .4, 1, .8)
-        ctx.set_line_width(7)
+        ctx.set_line_width(4)
         ctx.set_line_join(cairo.LINE_JOIN_ROUND)
 
         for i in range(1, self.cols):
@@ -179,10 +179,20 @@ class GridLock(Gtk.Window):
         xid = self.get_window().get_xid()
         window = Wnck.Window.get(xid)
         (x, y, width, height) = self.cursor_rect.to_cairo(cell_width, cell_height)
-        (root_x, root_y, root_width, root_height) = window.get_geometry()
+        (root_x, root_y, root_width, root_height) = window.get_client_window_geometry()
+        f = open("gridlock.log", "a")
+        f.write("*****\n")
+        f.write("window: {}\n".format(self.get_title()))
+        f.write("x: {}\n".format(x))
+        f.write("root_x: {}\n".format(root_x))
+        f.write("y: {}\n".format(y))
+        f.write("root_y: {}\n".format(root_y))
+        f.write("width: {}\n".format(width))
+        f.write("height: {}\n".format(height))
+        f.close()
 
         self.active_window.set_geometry(
-            Wnck.WindowGravity.CURRENT,
+            Wnck.WindowGravity.NORTHWEST,
             Wnck.WindowMoveResizeMask.X
             | Wnck.WindowMoveResizeMask.Y
             | Wnck.WindowMoveResizeMask.WIDTH
