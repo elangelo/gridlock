@@ -371,8 +371,7 @@ if args.debug:
     print(f'          type = "{active_window.get_window_type()}"')
     print(f'      geometry = {active_window.get_geometry()}')
     print(f'clientgeometry = {active_window.get_client_window_geometry()}')
-    print(f'{active_window.get_client_window_geometry() == active_window.get_geometry()}')
-    print(f'          role = {active_window.get_role()}')
+    print(f'clientgeometry equals window geometry = {active_window.get_client_window_geometry() == active_window.get_geometry()}')
 
 # windows that have CSD enabled actually report that their client_window_geometry is the same as the full window_geometry, so only add the offset to those windows
 if active_window.get_client_window_geometry() == active_window.get_geometry():
