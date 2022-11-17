@@ -79,6 +79,7 @@ class GridLock(Gtk.Window):
         self.cols = cols
         self.rows = rows
         self.drag = False
+        self.wnck_window = None
         self.cursor_rect = Rect()
         self.connect('destroy', Gtk.main_quit)
         #
@@ -103,10 +104,10 @@ class GridLock(Gtk.Window):
             )
 
         self.set_app_paintable(True)
-        self.connect("key-press-event",self.on_key_press)
+        self.connect('key-press-event',self.on_key_press)
         self.connect('button_press_event', self.on_mouse_press)
         self.connect('button_release_event', self.on_mouse_release)
-        self.connect("motion_notify_event", self.on_mouse_move)
+        self.connect('motion_notify_event', self.on_mouse_move)
         self.connect('draw', self.on_draw_window)
 
         overlay = Gtk.Overlay()
@@ -122,6 +123,21 @@ class GridLock(Gtk.Window):
         self.add(overlay)
 
     def on_draw_window(self, window, ctx):
+        #
+        # instead of waiting for the Gdk.Window and installing an
+        # 'expose-event' signal handler there, just piggyback this
+        # onto the 'draw' handler:
+        #
+        if self.wnck_window is None:
+            xid = self.get_window().get_xid()
+            # this may not work on the first 'draw' event...
+            self.wnck_window = Wnck.Window.get(xid)
+            if self.wnck_window is not None:
+                if args.debug:
+                    print(f'Grid window 0x{xid} is on screen, setting window type')
+                self.wnck_window.set_window_type(Wnck.WindowType.UTILITY)
+            elif args.debug:
+                print(f'Could not get window by xid 0x{xid}')
         #
         # make window transparent without affecting child widgets
         #
@@ -169,14 +185,22 @@ class GridLock(Gtk.Window):
 
     def on_key_press(self, widget, event):
         if event.keyval == Gdk.KEY_q or event.keyval == Gdk.KEY_Escape:
+            if args.debug:
+                print(f'Move-resize aborted by key press event {event.keyval}')
             Gtk.main_quit()
             return True
 
     def on_mouse_press(self, widget, event):
         if event.button == 1:
             self.drag = True
+            if args.debug:
+                print(f'Dragging mode started')
+            return True
         else:
+            if args.debug:
+                print(f'Move-resize aborted by mouse press event {event.button}')
             Gtk.main_quit()
+            return True
 
     def on_mouse_release(self, widget, event):
         if event.button == 1:
@@ -186,10 +210,8 @@ class GridLock(Gtk.Window):
             cell_width = allocation.width // self.cols
             cell_height = allocation.height // self.rows
 
-            xid = self.get_window().get_xid()
-            window = Wnck.Window.get(xid)
             (x, y, width, height) = self.cursor_rect.to_cairo(cell_width, cell_height)
-            (grid_x, grid_y, grid_width, grid_height) = window.get_geometry()
+            (grid_x, grid_y, grid_width, grid_height) = self.wnck_window.get_geometry()
 
             new_x = x + grid_x + args.offset[0]
             new_y = y + grid_y + args.offset[1]
@@ -351,7 +373,7 @@ if args.debug:
 
 if active_window.get_window_type() != Wnck.WindowType.NORMAL:
     if args.debug:
-        print('Window type is not NORMAL, terminating...')
+        print('Window type is not Wnck.WindowType.NORMAL, terminating...')
     sys.exit(0)
 
 window = GridLock(active_window, *args.grid)
