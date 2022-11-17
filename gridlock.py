@@ -82,13 +82,16 @@ class GridLock(Gtk.Window):
         self.wnck_window = None
         self.cursor_rect = Rect()
         self.connect('destroy', Gtk.main_quit)
-        #
-        # Set the grid to maximze. Hopefully, this respects any docks,
-        # sidebars and other reserved spaces. On window move-resize we
-        # translate coordinates wrt geometry of this maximized window.
-        #
-        self.maximize()
-        self.set_decorated(False)
+        if args.fullscreen:
+            self.fullscreen()
+        else:
+            #
+            # Set the grid to maximze. Hopefully, this respects any docks,
+            # sidebars and other reserved spaces. On window move-resize we
+            # translate coordinates wrt geometry of this maximized window.
+            #
+            self.maximize()
+            self.set_decorated(False)
 
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
@@ -288,6 +291,10 @@ arg_parser.add_argument('-w', '--window-gravity', '--gravity',
     dest='gravity', action='store',
     help='specify gravity for window geometry changes: "current", "northwest"'
         ' or "static", default is "static"',
+    )
+arg_parser.add_argument('-f', '--fullscreen',
+    dest='fullscreen', action='store_true',
+    help='use fullscreen mode instead of a maximized undecorated window',
     )
 arg_parser.add_argument('-o', '--offset',
     dest='offset', action='store',
