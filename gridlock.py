@@ -30,11 +30,16 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <https://www.gnu.org/licenses/>.
 """
 
+import sys
+import argparse
 import gi
 gi.require_version('Gtk', '3.0')
 gi.require_version('Wnck', '3.0')
 from gi.repository import Gtk, Gdk, GdkX11, Wnck
 import cairo
+
+progname = 'gridlock'
+version = '0.2.99'
 
 
 class Rect():
@@ -76,6 +81,11 @@ class GridLock(Gtk.Window):
         self.drag = False
         self.cursor_rect = Rect()
         self.connect('destroy', Gtk.main_quit)
+        #
+        # Set the grid to fullscreen. Hopefully, this respects any docks,
+        # sidebars and other reserved spaces. On window move-resize we
+        # translate coordinates wrt geometry of this fullscreen window.
+        #
         self.fullscreen()
 
         screen = self.get_screen()
@@ -112,6 +122,9 @@ class GridLock(Gtk.Window):
         self.add(overlay)
 
     def on_draw_window(self, window, ctx):
+        #
+        # make window transparent without affecting child widgets
+        #
         ctx.set_source_rgba(0, 0, 0, 0)
         ctx.set_operator(cairo.OPERATOR_SOURCE)
         ctx.paint()
@@ -123,7 +136,7 @@ class GridLock(Gtk.Window):
         cell_height = allocation.height // self.rows
 
         if self.cursor_rect:
-            ctx.set_source_rgba(1.0, 1.0, 1.0, .3)
+            ctx.set_source_rgba(*args.hi_color)
             ctx.rectangle(
                 *self.cursor_rect.to_cairo(cell_width, cell_height)
                 )
@@ -134,11 +147,11 @@ class GridLock(Gtk.Window):
         width = allocation.width
         height = allocation.height
 
-        ctx.set_source_rgba(0, 0, 0, .2)
+        ctx.set_source_rgba(*args.bg_color)
         ctx.rectangle(0, 0, width, height)
         ctx.fill()
 
-        ctx.set_source_rgba(0, .4, 1, .8)
+        ctx.set_source_rgba(*args.grid_color)
         ctx.set_line_width(7)
         ctx.set_line_join(cairo.LINE_JOIN_ROUND)
 
@@ -166,30 +179,42 @@ class GridLock(Gtk.Window):
             Gtk.main_quit()
 
     def on_mouse_release(self, widget, event):
-        self.drag = False
+        if event.button == 1:
+            self.drag = False
 
-        allocation = self.grid.get_allocation()
-        cell_width = allocation.width // self.cols
-        cell_height = allocation.height // self.rows
+            allocation = self.grid.get_allocation()
+            cell_width = allocation.width // self.cols
+            cell_height = allocation.height // self.rows
 
-        xid = self.get_window().get_xid()
-        window = Wnck.Window.get(xid)
-        (x, y, width, height) = self.cursor_rect.to_cairo(cell_width, cell_height)
-        (root_x, root_y, root_width, root_height) = window.get_geometry()
+            xid = self.get_window().get_xid()
+            window = Wnck.Window.get(xid)
+            (x, y, width, height) = self.cursor_rect.to_cairo(cell_width, cell_height)
+            (grid_x, grid_y, grid_width, grid_height) = window.get_geometry()
 
-        self.active_window.set_geometry(
-            Wnck.WindowGravity.CURRENT,
-            Wnck.WindowMoveResizeMask.X
-            | Wnck.WindowMoveResizeMask.Y
-            | Wnck.WindowMoveResizeMask.WIDTH
-            | Wnck.WindowMoveResizeMask.HEIGHT,
-            x + root_x,
-            y + root_y,
-            width,
-            height,
-            )
+            new_x = x + grid_x + args.offset[0]
+            new_y = y + grid_y + args.offset[1]
 
-        Gtk.main_quit()
+            if args.debug:
+                print('Compute new geometry and call Wnck.window.set_geometry()')
+                print(f'  target geometry = {width}x{height}+{x}+{y}')
+                print(f'  grid geometry = {grid_width}x{grid_height}+{grid_x}+{grid_y}')
+                print(f'  offset = {args.offset}')
+                print(f'  translated geometry = {width}x{height}+{new_x}+{new_y}')
+
+            self.active_window.set_geometry(
+                Wnck.WindowGravity.STATIC,
+                Wnck.WindowMoveResizeMask.X
+                | Wnck.WindowMoveResizeMask.Y
+                | Wnck.WindowMoveResizeMask.WIDTH
+                | Wnck.WindowMoveResizeMask.HEIGHT,
+                new_x,
+                new_y,
+                width,
+                height,
+                )
+
+            Gtk.main_quit()
+            return True
 
     def on_mouse_move(self, widget, event):
         allocation = self.grid.get_allocation()
@@ -206,14 +231,115 @@ class GridLock(Gtk.Window):
         self.cursor.queue_draw()
 
 
+def parse_color_spec(arg_string):
+    color_spec = tuple(float(f) for f in arg_string.split(','))
+    if len(color_spec) == 3:
+        color_spec = (*color_spec, 1.0)
+    if len(color_spec) != 4:
+        raise ValueError(f'Invalid color specification "{arg_string}"')
+    for f in color_spec:
+        if f < 0 or f > 1:
+            raise ValueError(f'Invalid color specification "{arg_string}"')
+    return color_spec
+
+#
+# parse command line arguments
+#
+arg_parser = argparse.ArgumentParser(
+    prog = progname,
+    description = '',
+    epilog = 'Specify color components as floats [0.0, 1.0].\n'
+        'Caveat: This tool uses RGBA visuals. Compositor needed.',
+    formatter_class = argparse.RawDescriptionHelpFormatter,
+    )
+arg_parser.add_argument('-d', '--debug',
+    dest='debug', action='store_true',
+    help='generate debug output, lots of',
+    )
+arg_parser.add_argument('-v', '--version',
+    action='version', version=f'This is {progname} version {version}.',
+    help='print version information and terminate',
+    )
+arg_parser.add_argument('-w', '--window-gravity', '--gravity',
+    dest='gravity', action='store',
+    help='specify gravity for window geometry changes: "current", "northwest"'
+        ' or "static", default is "static"',
+    )
+arg_parser.add_argument('-o', '--offset',
+    dest='offset', action='store',
+    help='add offset to target geometry: "x_offset,y_offset", can be negative',
+    )
+arg_parser.add_argument('-g', '--grid',
+    dest='grid', action='store',
+    help='specify grid as "columns,rows"',
+    )
+arg_parser.add_argument('-c', '--grid-color',
+    dest='grid_color', action='store',
+    help='grid color as "red,green,blue[,opacity]"',
+    )
+arg_parser.add_argument('-b', '--background-color', '--bg-color',
+    dest='bg_color', action='store',
+    help='background color as "red,green,blue[,opacity]"',
+    )
+arg_parser.add_argument('-l', '--hilight-color', '--hi-color',
+    dest='hi_color', action='store',
+    help='hilight color as "red,green,blue[,opacity]"',
+    )
+
+args = arg_parser.parse_args()
+
+#
+# parse grid specification
+#
+if args.grid is not None:
+    args.grid = tuple(int(i) for i in args.grid.split(','))
+else:
+    args.grid = (16, 10)
+
+#
+# parse offset specification
+#
+if args.offset is not None:
+    args.offset = tuple(int(i) for i in args.offset.split(','))
+else:
+    args.offset = (0, 0)
+
+#
+# parse color specifications
+#
+if args.grid_color is not None:
+    args.grid_color = parse_color_spec(args.grid_color)
+else:
+    args.grid_color = (.0, .4, 1.0, .8)
+
+if args.bg_color is not None:
+    args.bg_color = parse_color_spec(args.bg_color)
+else:
+    args.bg_color = (.0, .0, .0, .2)
+
+if args.hi_color is not None:
+    args.hi_color = parse_color_spec(args.hi_color)
+else:
+    args.hi_color = (1.0, 1.0, 1.0, .3)
+
 screen = Wnck.Screen.get_default()
 screen.force_update()
 active_window = screen.get_active_window()
-
 if active_window is None:
-    raise RuntimeError('Could not deterine active window')
+    raise RuntimeError('Could not determine active window')
 
-window = GridLock(active_window)
+if args.debug:
+    print(f'Active window is 0x{active_window.get_xid():x}')
+    print(f'  name = "{active_window.get_name()}"')
+    print(f'  class group = "{active_window.get_class_group_name()}"')
+    print(f'  type = "{active_window.get_window_type()}"')
+
+if active_window.get_window_type() != Wnck.WindowType.NORMAL:
+    if args.debug:
+        print('Window type is not NORMAL, terminating...')
+    sys.exit(0)
+
+window = GridLock(active_window, *args.grid)
 window.show_all()
 Gtk.main()
 
