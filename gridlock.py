@@ -92,6 +92,7 @@ class GridLock(Gtk.Window):
             #
             self.maximize()
             self.set_decorated(False)
+            self.set_keep_above(True)
 
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
