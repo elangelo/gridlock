@@ -290,7 +290,7 @@ arg_parser.add_argument('-v', '--version',
 arg_parser.add_argument('-w', '--window-gravity', '--gravity',
     dest='gravity', action='store',
     help='specify gravity for window geometry changes: "current", "northwest"'
-        ' or "static", default is "static"',
+        ' or "static", default is "current"',
     )
 arg_parser.add_argument('-f', '--fullscreen',
     dest='fullscreen', action='store_true',
