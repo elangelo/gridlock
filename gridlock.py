@@ -77,6 +77,7 @@ class GridLock(Gtk.Window):
 
         self.active_window = active_window
         self.originalgeometry = active_window.get_geometry()
+        self.window_was_maximized = active_window.is_maximized()
         self.cols = cols
         self.rows = rows
         self.drag = False
@@ -244,6 +245,11 @@ class GridLock(Gtk.Window):
                 print(f'  grid geometry = {grid_width}x{grid_height}+{grid_x}+{grid_y}')
                 print(f'  offset = {args.offset}')
                 print(f'  translated geometry = {new_width}x{new_height}+{new_x}+{new_y}')
+
+            # if the window was maximized we need to unmaximize it before we try to resize it, otherwise the resize operation fails
+            if self.window_was_maximized:
+                print('unmaximizing before resizing!!!')
+                self.active_window.unmaximize()
 
             self.active_window.set_geometry(
                 args.gravity,
