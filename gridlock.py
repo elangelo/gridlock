@@ -353,7 +353,7 @@ if args.gravity is not None:
     else:
         raise ValueError(f'Illegal gravity value: "args.gravity"')
 else:
-    args.gravity = Wnck.WindowGravity.STATIC
+    args.gravity = Wnck.WindowGravity.CURRENT
 
 #
 # parse color specifications
