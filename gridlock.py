@@ -76,6 +76,7 @@ class GridLock(Gtk.Window):
         super().__init__(title='Gridlock')
 
         self.active_window = active_window
+        self.originalgeometry = active_window.get_geometry()
         self.cols = cols
         self.rows = rows
         self.drag = False
@@ -194,6 +195,17 @@ class GridLock(Gtk.Window):
         if event.keyval == Gdk.KEY_q or event.keyval == Gdk.KEY_Escape:
             if args.debug:
                 print(f'Move-resize aborted by key press event {event.keyval}')
+            self.active_window.set_geometry(
+                args.gravity,
+                Wnck.WindowMoveResizeMask.X
+                | Wnck.WindowMoveResizeMask.Y
+                | Wnck.WindowMoveResizeMask.WIDTH
+                | Wnck.WindowMoveResizeMask.HEIGHT,
+                self.originalgeometry[0],
+                self.originalgeometry[1],
+                self.originalgeometry[2],
+                self.originalgeometry[3]
+            )
             Gtk.main_quit()
             return True
 
