@@ -83,11 +83,12 @@ class GridLock(Gtk.Window):
         self.cursor_rect = Rect()
         self.connect('destroy', Gtk.main_quit)
         #
-        # Set the grid to fullscreen. Hopefully, this respects any docks,
+        # Set the grid to maximize. Hopefully, this respects any docks,
         # sidebars and other reserved spaces. On window move-resize we
-        # translate coordinates wrt geometry of this fullscreen window.
+        # translate coordinates wrt geometry of this maximized window.
         #
-        self.fullscreen()
+        self.maximize()
+        self.set_decorated(False)
 
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
@@ -119,7 +120,7 @@ class GridLock(Gtk.Window):
         self.grid = Gtk.DrawingArea()
         self.grid.connect('draw', self.on_draw_grid)
         overlay.add_overlay(self.grid)
-
+        
         self.add(overlay)
 
     def on_draw_window(self, window, ctx):
