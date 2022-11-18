@@ -77,7 +77,6 @@ class GridLock(Gtk.Window):
 
         self.active_window = active_window
         self.window_was_maximized = active_window.is_maximized()
-        print(f'window was maximized: {self.window_was_maximized}')
         self.cols = cols
         self.rows = rows
         self.drag = False
