@@ -82,13 +82,16 @@ class GridLock(Gtk.Window):
         self.wnck_window = None
         self.cursor_rect = Rect()
         self.connect('destroy', Gtk.main_quit)
-        #
-        # Set the grid to maximize. Hopefully, this respects any docks,
-        # sidebars and other reserved spaces. On window move-resize we
-        # translate coordinates wrt geometry of this maximized window.
-        #
-        self.maximize()
-        self.set_decorated(False)
+        if args.fullscreen:
+            self.fullscreen()
+        else:
+            #
+            # Set the grid to maximze. Hopefully, this respects any docks,
+            # sidebars and other reserved spaces. On window move-resize we
+            # translate coordinates wrt geometry of this maximized window.
+            #
+            self.maximize()
+            self.set_decorated(False)
 
         screen = self.get_screen()
         visual = screen.get_rgba_visual()
@@ -273,7 +276,8 @@ def parse_color_spec(arg_string):
 arg_parser = argparse.ArgumentParser(
     prog = progname,
     description = '',
-    epilog = 'Specify color components as floats [0.0, 1.0].\n'
+    epilog = 'Specify color components as floats [0.0, 1.0], e.g.'
+        ' "0.5,0.8,1.0,0.8" for\nlight sky blue with 80% opacity.\n\n'
         'Caveat: This tool uses RGBA visuals. Compositor needed.',
     formatter_class = argparse.RawDescriptionHelpFormatter,
     )
@@ -290,6 +294,10 @@ arg_parser.add_argument('-w', '--window-gravity', '--gravity',
     help='specify gravity for window geometry changes: "current", "northwest"'
         ' or "static", default is "static"',
     )
+arg_parser.add_argument('-f', '--fullscreen',
+    dest='fullscreen', action='store_true',
+    help='use fullscreen mode instead of a maximized undecorated window',
+    )
 arg_parser.add_argument('-o', '--offset',
     dest='offset', action='store',
     help='add offset to target geometry: "x_offset,y_offset", can be negative',
@@ -300,7 +308,7 @@ arg_parser.add_argument('-g', '--grid',
     )
 arg_parser.add_argument('-c', '--grid-color',
     dest='grid_color', action='store',
-    help='grid color as "red,green,blue[,opacity], eg. 0,0,1.0 for blue"',
+    help='grid color as "red,green,blue[,opacity]"',
     )
 arg_parser.add_argument('-b', '--background-color', '--bg-color',
     dest='bg_color', action='store',
@@ -403,4 +411,3 @@ now = GdkX11.x11_get_server_time(
         )
     )
 active_window.activate(now)
-
