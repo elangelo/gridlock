@@ -195,17 +195,18 @@ class GridLock(Gtk.Window):
         if event.keyval == Gdk.KEY_q or event.keyval == Gdk.KEY_Escape:
             if args.debug:
                 print(f'Move-resize aborted by key press event {event.keyval}')
-            self.active_window.set_geometry(
-                args.gravity,
-                Wnck.WindowMoveResizeMask.X
-                | Wnck.WindowMoveResizeMask.Y
-                | Wnck.WindowMoveResizeMask.WIDTH
-                | Wnck.WindowMoveResizeMask.HEIGHT,
-                self.originalgeometry[0],
-                self.originalgeometry[1],
-                self.originalgeometry[2],
-                self.originalgeometry[3]
-            )
+            if args.livepreview:
+                self.active_window.set_geometry(
+                    args.gravity,
+                    Wnck.WindowMoveResizeMask.X
+                    | Wnck.WindowMoveResizeMask.Y
+                    | Wnck.WindowMoveResizeMask.WIDTH
+                    | Wnck.WindowMoveResizeMask.HEIGHT,
+                    self.originalgeometry[0],
+                    self.originalgeometry[1],
+                    self.originalgeometry[2],
+                    self.originalgeometry[3]
+                    )
             Gtk.main_quit()
             return True
 
@@ -270,7 +271,7 @@ class GridLock(Gtk.Window):
             self.cursor_rect.y2 = int(event.y / cell_height)
             
             (x, y, width, height) = self.cursor_rect.to_cairo(cell_width, cell_height)
-            if (self.oldcursorposition != (x,y,width,height)):
+            if args.livepreview and self.oldcursorposition != (x,y,width,height):
                 print(f'cursor changed')
                 self.oldcursorposition = (x,y,width,height)
                 (grid_x, grid_y, grid_width, grid_height) = self.wnck_window.get_geometry()
@@ -366,7 +367,10 @@ arg_parser.add_argument('-t', '--grid-thickness',
     dest='grid_thickness', action='store',
     help='thickness of the lines of the grid lines in pixels'
     )
-
+arg_parser.add_argument('-p', '--live-preview',
+    dest='livepreview', action='store_true',
+    help='show a live preview of how the window is resized, WARNING disable this if your X11 client does not respond well to rapid geometry changes'
+    )
 
 args = arg_parser.parse_args()
 
@@ -377,8 +381,6 @@ if args.grid is not None:
     args.grid = tuple(int(i) for i in args.grid.split(','))
 else:
     args.grid = (16, 10)
-
-
 
 #
 # parse gravity specification
