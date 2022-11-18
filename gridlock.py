@@ -250,6 +250,31 @@ class GridLock(Gtk.Window):
         if self.drag:
             self.cursor_rect.x2 = int(event.x / cell_width)
             self.cursor_rect.y2 = int(event.y / cell_height)
+            
+            (x, y, width, height) = self.cursor_rect.to_cairo(cell_width, cell_height)
+            (grid_x, grid_y, grid_width, grid_height) = self.wnck_window.get_geometry()
+
+            new_x = x + grid_x + args.offset[0]
+            new_y = y + grid_y + args.offset[1]
+
+            if args.debug:
+                print('Compute new geometry and call Wnck.window.set_geometry()')
+                print(f'  target geometry = {width}x{height}+{x}+{y}')
+                print(f'  grid geometry = {grid_width}x{grid_height}+{grid_x}+{grid_y}')
+                print(f'  offset = {args.offset}')
+                print(f'  translated geometry = {width}x{height}+{new_x}+{new_y}')
+
+            self.active_window.set_geometry(
+                args.gravity,
+                Wnck.WindowMoveResizeMask.X
+                | Wnck.WindowMoveResizeMask.Y
+                | Wnck.WindowMoveResizeMask.WIDTH
+                | Wnck.WindowMoveResizeMask.HEIGHT,
+                new_x,
+                new_y,
+                width,
+                height,
+                )
         else:
             self.cursor_rect.x1 = self.cursor_rect.x2 = int(event.x / cell_width)
             self.cursor_rect.y1 = self.cursor_rect.y2 = int(event.y / cell_height)
